@@ -1,0 +1,6 @@
+# Folders
+/scenes_drama/*
+/myenv/*
+
+# Environment variables
+.env

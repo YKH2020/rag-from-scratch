@@ -17,74 +17,74 @@ INDEX_NAME = "yash-index"  # Pinecone index
 
 # # --------- Extract your text data (can use library for parsing only) -------- #
 
-# dir = Path("scenes_drama")
+dir = Path("scenes_drama")
 
-# scripts = {}
+scripts = {}
 
-# for f in dir.glob("*.txt"):
-#     data = f.read_text(encoding="utf-8")
-#     scripts[f.name] = data
+for f in dir.glob("*.txt"):
+    data = f.read_text(encoding="utf-8")
+    scripts[f.name] = data
 
 # # --------------------------------- Chunk it --------------------------------- #
 
-# def simple_sentence_tokenize(text):
-#     """
-#     Tokenizes text using punctuation as sentence boundaries.
-#     """
-#     text = text.replace("\n", " ")
-#     return re.split(r'(?<=[.!?])\s+', text)
+def simple_sentence_tokenize(text):
+    """
+    Tokenizes text using punctuation as sentence boundaries.
+    """
+    text = text.replace("\n", " ")
+    return re.split(r'(?<=[.!?])\s+', text)
 
-# def chunk_text(text, max_words=500, overlap_sentences=2):
-#     """
-#     Splits texts into max_words words per chunk, with overlap_sentences sentences overlapping between chunks.
-#     """
-#     sentences = simple_sentence_tokenize(text)
-#     chunks = []
-#     chunk = []
-#     word_count = 0
+def chunk_text(text, max_words=500, overlap_sentences=2):
+    """
+    Splits texts into max_words words per chunk, with overlap_sentences sentences overlapping between chunks.
+    """
+    sentences = simple_sentence_tokenize(text)
+    chunks = []
+    chunk = []
+    word_count = 0
 
-#     for sentence in sentences:
-#         words_in_sentence = sentence.split()
-#         num_words = len(words_in_sentence)
+    for sentence in sentences:
+        words_in_sentence = sentence.split()
+        num_words = len(words_in_sentence)
         
-#         if word_count + num_words > max_words and chunk:
-#             chunk = " ".join(chunk)
-#             chunks.append(chunk)
+        if word_count + num_words > max_words and chunk:
+            chunk = " ".join(chunk)
+            chunks.append(chunk)
             
-#             if overlap_sentences > 0:
-#                 chunk = chunk[-overlap_sentences:]
-#                 word_count = sum(len(s.split()) for s in chunk)
-#             else:
-#                 chunk = []
-#                 word_count = 0
+            if overlap_sentences > 0:
+                chunk = chunk[-overlap_sentences:]
+                word_count = sum(len(s.split()) for s in chunk)
+            else:
+                chunk = []
+                word_count = 0
         
-#         chunk.append(sentence)
-#         word_count += num_words
+        chunk.append(sentence)
+        word_count += num_words
 
-#     if chunk:
-#         chunks.append(" ".join(chunk))
+    if chunk:
+        chunks.append(" ".join(chunk))
     
-#     return chunks
+    return chunks
 
-# script_chunks = {}
-# for filename, text in scripts.items():
-#     chunks = chunk_text(text, max_words=500, overlap_sentences=2)
-#     script_chunks[filename] = chunks
+script_chunks = {}
+for filename, text in scripts.items():
+    chunks = chunk_text(text, max_words=500, overlap_sentences=2)
+    script_chunks[filename] = chunks
 
-# for filename, chunks in script_chunks.items():
-#     print(f"{filename} -> {len(chunks)} chunks")
+for filename, chunks in script_chunks.items():
+    print(f"{filename} -> {len(chunks)} chunks")
 
-# all_chunks = []
-# for chunks in script_chunks.values():
-#     all_chunks.extend(chunks)
+all_chunks = []
+for chunks in script_chunks.values():
+    all_chunks.extend(chunks)
 
-# print(f"Total number of chunks from all scripts: {len(all_chunks)}")
+print(f"Total number of chunks from all scripts: {len(all_chunks)}")
 
 # -------------------------- Store it in a database -------------------------- #
 
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
-# embeddings = model.encode(all_chunks).tolist()
+embeddings = model.encode(all_chunks).tolist()
 
 pc = pinecone.Pinecone(api_key=PINECONE_API_KEY)
 
@@ -102,18 +102,18 @@ pc = pinecone.Pinecone(api_key=PINECONE_API_KEY)
 index = pc.Index(INDEX_NAME)
 
 # Note: Got this from the Pinecone documentation
-# vectors_to_upsert = []
-# for i, (chunk, vec) in enumerate(zip(all_chunks, embeddings)):
-#     vectors_to_upsert.append((str(i), vec, {"text": chunk}))
+vectors_to_upsert = []
+for i, (chunk, vec) in enumerate(zip(all_chunks, embeddings)):
+    vectors_to_upsert.append((str(i), vec, {"text": chunk}))
 
-# batch_size = 100
+batch_size = 100
 
-# for i in range(0, len(vectors_to_upsert), batch_size):
-#     batch = vectors_to_upsert[i:i + batch_size]
-#     index.upsert(vectors=batch)
-#     print(f"Upserted batch {i // batch_size + 1} of {len(vectors_to_upsert) // batch_size + 1}")
+for i in range(0, len(vectors_to_upsert), batch_size):
+    batch = vectors_to_upsert[i:i + batch_size]
+    index.upsert(vectors=batch)
+    print(f"Upserted batch {i // batch_size + 1} of {len(vectors_to_upsert) // batch_size + 1}")
 
-# print(f"Upserted {len(vectors_to_upsert)} vectors into the Pinecone index '{INDEX_NAME}'.")
+print(f"Upserted {len(vectors_to_upsert)} vectors into the Pinecone index '{INDEX_NAME}'.")
 
 # ----------------- Perform a retrieval using semantic search ---------------- #
 

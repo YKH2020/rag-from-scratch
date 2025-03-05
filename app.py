@@ -64,7 +64,7 @@ def get_answer(query):
         response_text += chunk.choices[0].delta.content
 
     scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
-    ground_truth = "Solomon Northup"
+    ground_truth = "In the movie 12 Years a Slave, Solomon Northup, a man in his late twenties with a distinguished mien and manner, lightly plays his violin."
     rouge_scores = scorer.score(ground_truth, response_text)
 
     rouge_results = "\n".join([f"{k}: Precision: {v.precision:.4f}, Recall: {v.recall:.4f}, F1: {v.fmeasure:.4f}" for k, v in rouge_scores.items()])
